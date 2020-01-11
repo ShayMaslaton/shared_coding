@@ -77,10 +77,9 @@ public class Server {
 	 *             if the main server socket is broken
 	 */
 	public void serve() {
+		connectToMongo();
 		while (true) {
 			try {
-				connectToMongo();
-				
 				// block until a client connects
 				Socket socket = serverSocket.accept();
 				// handle the client by making a new OurThreadClass thread
