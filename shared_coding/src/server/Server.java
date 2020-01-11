@@ -11,6 +11,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 
+import org.bson.Document;
+
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+
 import debug.Debug;
 
 /**
@@ -33,6 +40,11 @@ public class Server {
 	private ArrayList<OurThreadClass> threadList;
 	private ArrayList<String> usernameList;
 	private final EditManager editManager;
+	
+	private MongoClientURI clientURI;
+	private MongoClient mongoClient;
+	private MongoDatabase mongoDb;
+	private MongoCollection<Document> projects;
 
 	/**
 	 * Make a Server that listens for connections on port.
@@ -67,6 +79,8 @@ public class Server {
 	public void serve() {
 		while (true) {
 			try {
+				connectToMongo();
+				
 				// block until a client connects
 				Socket socket = serverSocket.accept();
 				// handle the client by making a new OurThreadClass thread
@@ -185,10 +199,17 @@ public class Server {
 	 * @param documentName
 	 *            name of document
 	 */
-	public synchronized void addNewDocument(String documentName) {
-		documentMap.put(documentName, new StringBuffer());
+	public synchronized void addNewDocument(String documentName, String username) {
+		Document document = new Document("name", documentName);
+		document.append("text", ""); //TODO public main
+		document.append("active", true);
+		document.append("creator", username);
+		
+		projects.insertOne(document);
+		
+		/*documentMap.put(documentName, new StringBuffer());
 		documentVersionMap.put(documentName, 1);
-		editManager.createNewlog(documentName);
+		editManager.createNewlog(documentName);*/
 
 	}
 
@@ -309,6 +330,14 @@ public class Server {
 				}
 			}
 		}
+	}
+	private void connectToMongo() {
+		String uri = "mongodb+srv://admin:admin@cluster0-sjsqe.mongodb.net/test";
+		clientURI = new MongoClientURI(uri);
+		mongoClient = new MongoClient(clientURI);
+		
+		mongoDb = mongoClient.getDatabase("Shared_coding");
+		projects = mongoDb.getCollection("Projects");
 	}
 
 }

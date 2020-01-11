@@ -27,7 +27,7 @@ public class OurThreadClass extends Thread {
 	private boolean alive;
 	private String username;
 	private final Server server;
-	private final String regex = "(bye)|(new [\\w\\d]+)|(look)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)";
+	private final String regex = "(bye)|(new [\\w\\d]+)|(look)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)"; //TODO add save!
 	private final String error1 = "Error: Document already exists.";
 	private final String error2 = "Error: No such document.";
 	private final String error3 = "Error: No documents exist yet.";
@@ -141,7 +141,7 @@ public class OurThreadClass extends Thread {
 	
 	/**
 	 * handler for client input. Our grammar: 
-	 * Message :== Edit | Open | New | Look| Bye |Name
+	 * Message :== Edit | Open | New | Look| Bye |Name | Save
 	 * Edit :== change DocumentName Username Version (Remove|Insert) 
 	 * Remove :==remove Position Position 
 	 * Insert :== insert Chars Position 
@@ -149,6 +149,7 @@ public class OurThreadClass extends Thread {
 	 * New :== new DocumentName 
 	 * Look :== look 
 	 * Bye::=="bye"
+	 * Save :== save
 	 * Name ::== name Username
 	 * Username ::== Chars
 	 * Chars:==.+ 
@@ -191,6 +192,9 @@ public class OurThreadClass extends Thread {
 				alive = false;
 				returnMessage = "bye";
 
+			} else if (tokens[0].equals("save")) {
+				//TODO
+				
 			} else if (tokens[0].equals("new")) {
 				// 'new' request, make a new document if the name is valid. else, return a error message.
 				String documentName = tokens[1];
@@ -200,7 +204,7 @@ public class OurThreadClass extends Thread {
 				if (server.getDocumentMap().containsKey(documentName)) {
 					returnMessage = error1;
 				} else {
-					server.addNewDocument(documentName);
+					server.addNewDocument(documentName, username);
 					returnMessage = "new " + documentName;
 				}
 			}else if(tokens[0].equals("name")){
@@ -226,7 +230,7 @@ public class OurThreadClass extends Thread {
 					returnMessage = result;
 				}
 
-			} else if (tokens[0].equals("open")) {
+			} else if (tokens[0].equals("open")) {				//TODO Open from mongodb
 				// 'open' request, must open a document if it exists on server
 				String documentName = tokens[1];
 				if (!server.getDocumentMap().containsKey(documentName)

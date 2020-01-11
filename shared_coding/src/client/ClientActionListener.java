@@ -47,7 +47,7 @@ public class ClientActionListener {
 		this.socket = socket;
 		this.main = client.getMainWindow();
 	}
-    
+
 	/**
 	 * listens for server updates and handle the message
 	 * @throws IOException
@@ -97,7 +97,7 @@ public class ClientActionListener {
 			main.openErrorView("from CAL: regex failure");
 		}
 		String[] tokens = input.split(" ");
-		
+
 		// 'error' message , only update the front-end
 		if (tokens[0].equals("Error:")) {
 			main.openErrorView(input);
@@ -114,8 +114,8 @@ public class ClientActionListener {
 		}
 		else if (tokens[0].equals("name")){
 			client.setUsername(tokens[1]);
-			
-			
+
+
 		}
 
 		// "Create" a document with valid name, needs to update the front and
@@ -137,33 +137,31 @@ public class ClientActionListener {
 			if (DEBUG){System.out.println("The open message gets the document with text:" + documentText);}
 			main.switchToDocumentView(tokens[1], documentText);
 
-			
+
 
 		}
 
 		// Change the document.
-		else if (tokens[0].equals("change")) {
+		//Update DataBase
+		else if (tokens[0].equals("change")) {			//TODO add MongoDB
 			// first, need to check the documents are the same
 			if(DEBUG){System.out.println("from CAL: updating document(in ClientActionListener.java)");}
 			int version = Integer.parseInt(matcher.group(groupChangeVersion));
 			if (client.getDocumentName()!=null) {
 				if(client.getDocumentName().equals(tokens[1]) ){
-				// The document is changed, must update the back-end and front end
-				String username = tokens[2];
-				String documentText = matcher.group(groupChangeText);
-				if(DEBUG){System.out.println(documentText);}
-				int editPosition = Integer.parseInt(matcher.group(groupChangePosition));
-				int editLength = Integer.parseInt(matcher.group(groupChangeLength));
-				if(DEBUG){System.out.println(documentText);}
-				main.updateDocument(documentText, editPosition, editLength, username, version);
-				client.updateText(documentText);
-				client.updateVersion(version);
-
+					// The document is changed, must update the back-end and front end
+					String username = tokens[2];
+					String documentText = matcher.group(groupChangeText);
+					if(DEBUG){System.out.println(documentText);}
+					int editPosition = Integer.parseInt(matcher.group(groupChangePosition));
+					int editLength = Integer.parseInt(matcher.group(groupChangeLength));
+					if(DEBUG){System.out.println(documentText);}
+					main.updateDocument(documentText, editPosition, editLength, username, version);
+					client.updateText(documentText);
+					client.updateVersion(version);
+				}
 			}
-
 		}
-		}
-
 	}
 
 }

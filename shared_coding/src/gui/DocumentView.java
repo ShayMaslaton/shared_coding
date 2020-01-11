@@ -34,7 +34,7 @@ public class DocumentView extends JPanel {
 	private JFrame frame;
 	private JMenuBar menu;
 	private JMenu file, edit;
-	private JMenuItem newfile, open, exit, copy, cut, paste; 
+	private JMenuItem newfile, open, exit, copy, cut, paste, save; 
 	private JLabel documentNameLabel;
 	private String documentName, documentText;
 	private JTextArea area;
@@ -111,10 +111,16 @@ public class DocumentView extends JPanel {
 		open.addActionListener(new OpenFileListener());
 		file.add(open);
 
+		save = new JMenuItem("Save");
+		save.addActionListener(new SaveFileListener());
+		file.add(save);
+
 		exit = new JMenuItem("Exit");
 		exit.addActionListener(new ExitFileListener());
 		file.add(exit);
+		
 		frame.setJMenuBar(menu);
+		
 		
 		caret = new DefaultCaret();
 		area = new JTextArea(25, 65);
@@ -320,6 +326,18 @@ public class DocumentView extends JPanel {
 			}
 		}
 	}
+	
+	/** Class representing a Listener on the Open button in the JMenu */
+	private class SaveFileListener implements ActionListener {
+		/**
+		 * Save the File to the Cloud SQL
+		 */
+		public void actionPerformed(ActionEvent e) {
+			// send message to client, get documentNames
+			client.sendMessageToServer("save");
+		}
+	}
+	
 	/** Class representing a listener on the Copy button in the JMenu*/
 	private class CopyListener implements ActionListener {
 		
