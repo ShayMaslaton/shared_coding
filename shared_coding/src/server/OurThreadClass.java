@@ -189,12 +189,17 @@ public class OurThreadClass extends Thread {
 		} else {
 			if (tokens[0].equals("bye")) {
 				// 'bye' request
+				String text = "SAVING";
+				String fileName = "la1";
+				server.updateMongo(username +"-"+ fileName, text);
 				alive = false;
 				returnMessage = "bye";
 
 			} else if (tokens[0].equals("save")) {
-				//TODO
-				
+				String text = Encoding.decode(tokens[5]);
+				String fileName = tokens[1];
+				server.updateMongo(username +"-"+ fileName, text);
+				returnMessage = "save";
 			} else if (tokens[0].equals("new")) {
 				// 'new' request, make a new document if the name is valid. else, return a error message.
 				String documentName = tokens[1];

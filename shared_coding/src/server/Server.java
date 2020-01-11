@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
@@ -199,16 +200,17 @@ public class Server {
 	 *            name of document
 	 */
 	public synchronized void addNewDocument(String documentName, String username) {
-		Document document = new Document("name", documentName);
+		Document document = new Document("key", username+"-"+documentName);
+		document.append("name", documentName);
+		document.append("creator", username);
 		document.append("text", ""); //TODO public main
 		document.append("active", true);
-		document.append("creator", username);
 		
 		projects.insertOne(document);
 		
-		/*documentMap.put(documentName, new StringBuffer());
+		documentMap.put(documentName, new StringBuffer());
 		documentVersionMap.put(documentName, 1);
-		editManager.createNewlog(documentName);*/
+		editManager.createNewlog(documentName);
 
 	}
 
@@ -337,6 +339,15 @@ public class Server {
 		
 		mongoDb = mongoClient.getDatabase("Shared_coding");
 		projects = mongoDb.getCollection("Projects");
+	}
+
+	public boolean updateMongo(String key, String text) {
+		Document found = (Document) projects.find(new Document("key", key)).first();
+		if(found == null)
+			return false;
+		Bson setValue = new Document("$set", new Document("text", text));
+		projects.updateOne(found, setValue);
+		return true;
 	}
 
 }
