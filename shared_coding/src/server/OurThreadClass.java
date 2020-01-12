@@ -27,7 +27,7 @@ public class OurThreadClass extends Thread {
 	private boolean alive;
 	private String username;
 	private final Server server;
-	private final String regex = "(bye)|(new [\\w\\d]+)|(look)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)"; //TODO add save!
+	private final String regex = "(bye [\\w\\d]+)|(save [\\w\\d]+)|(new [\\w\\d]+)|(look)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)"; //TODO add save!
 	private final String error1 = "Error: Document already exists.";
 	private final String error2 = "Error: No such document.";
 	private final String error3 = "Error: No documents exist yet.";
@@ -189,16 +189,15 @@ public class OurThreadClass extends Thread {
 		} else {
 			if (tokens[0].equals("bye")) {
 				// 'bye' request
-				String text = "SAVING";
-				String fileName = "la1";
-				server.updateMongo(username +"-"+ fileName, text);
+				String fileName = tokens[1];
+				server.updateMongo(username , fileName);
 				alive = false;
 				returnMessage = "bye";
 
 			} else if (tokens[0].equals("save")) {
-				String text = Encoding.decode(tokens[5]);
+				// 'save' request
 				String fileName = tokens[1];
-				server.updateMongo(username +"-"+ fileName, text);
+				server.updateMongo(username ,fileName);
 				returnMessage = "save";
 			} else if (tokens[0].equals("new")) {
 				// 'new' request, make a new document if the name is valid. else, return a error message.

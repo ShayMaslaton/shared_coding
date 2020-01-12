@@ -27,7 +27,7 @@ public class ClientActionListener {
 	private BufferedReader in;
 	private final String regex = "(Error: .+)|"
 			+ "(alldocs [\\w|\\d]+)|(new [\\w|\\d]+)|(open [\\w|\\d]+\\s(\\d+)\\s?(.+)?)|"
-			+ "(change [\\w|\\d]+\\s[\\w|\\d]+\\s(\\d+)\\s(\\d+)\\s(-?\\d+)\\s?(.+)?)|(name [\\d\\w]+)";
+			+ "(change [\\w|\\d]+\\s[\\w|\\d]+\\s(\\d+)\\s(\\d+)\\s(-?\\d+)\\s?(.+)?)|(name [\\d\\w]+)|(save)";
 	private final int groupChangeVersion = 8;
 	private final int groupChangePosition = 9;
 	private final int groupChangeLength = 10;

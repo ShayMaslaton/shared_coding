@@ -320,7 +320,7 @@ public class DocumentView extends JPanel {
 					JOptionPane.YES_NO_OPTION);
 			if (n == 0) {
 				if(!client.getSocket().isClosed()) {
-					client.sendMessageToServer("bye");
+					client.sendMessageToServer("bye " + documentName);
 					}
 				System.exit(0);
 			}
@@ -334,7 +334,7 @@ public class DocumentView extends JPanel {
 		 */
 		public void actionPerformed(ActionEvent e) {
 			// send message to client, get documentNames
-			client.sendMessageToServer("save");
+			client.sendMessageToServer("save " + documentName);
 		}
 	}
 	

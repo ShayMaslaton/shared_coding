@@ -204,7 +204,6 @@ public class Server {
 		document.append("name", documentName);
 		document.append("creator", username);
 		document.append("text", ""); //TODO public main
-		document.append("active", true);
 		
 		projects.insertOne(document);
 		
@@ -341,11 +340,11 @@ public class Server {
 		projects = mongoDb.getCollection("Projects");
 	}
 
-	public boolean updateMongo(String key, String text) {
-		Document found = (Document) projects.find(new Document("key", key)).first();
+	public boolean updateMongo(String userName, String documentName) {
+		Document found = (Document) projects.find(new Document("key", userName + "-" + documentName)).first();
 		if(found == null)
 			return false;
-		Bson setValue = new Document("$set", new Document("text", text));
+		Bson setValue = new Document("$set", new Document("text", documentMap.get(documentName).toString()));
 		projects.updateOne(found, setValue);
 		return true;
 	}
