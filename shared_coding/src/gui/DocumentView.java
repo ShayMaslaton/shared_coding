@@ -310,7 +310,7 @@ public class DocumentView extends JPanel {
 		 */
 		public void actionPerformed(ActionEvent e) {
 			// send message to client, get documentNames
-			client.sendMessageToServer("save");
+			client.sendMessageToServer("save " + username + " " + documentName);
 		}
 	}
 	
