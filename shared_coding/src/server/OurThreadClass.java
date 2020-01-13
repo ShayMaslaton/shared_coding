@@ -10,6 +10,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import org.bson.Document;
+
 import debug.Debug;
 
 /**
@@ -197,7 +199,7 @@ public class OurThreadClass extends Thread {
 				if (DEBUG) {
 					System.out.println("creating new document");
 				}
-				if (server.getDocumentMap().containsKey(documentName)) {
+				if (server.getDocumentMap().containsKey(username + "_" + documentName)) { // TODO CHECK IF WORKS
 					returnMessage = error1;
 				} else {
 					server.addNewDocument(username, documentName);
@@ -218,26 +220,28 @@ public class OurThreadClass extends Thread {
 				// 'look' request, 
 				// if server does not have any documents, return error message
 				// else, return a string of names separated by a space
-				String result = "alldocs";
-				if (server.documentMapisEmpty()) {
+				String allProjects = "alldocs";
+				allProjects = allProjects + server.getProjectsNames();
+				if (allProjects.trim().isEmpty()) {
 					returnMessage = error3;
 				} else {
-					result = result + server.getAllDocuments();
-					returnMessage = result;
+					returnMessage = allProjects;
 				}
 
 			} else if (tokens[0].equals("open")) {
 				// 'open' request, must open a document if it exists on server
-				String documentName = tokens[1];
-				if (!server.getDocumentMap().containsKey(documentName)
-						|| !server.getDocumentVersionMap().containsKey(
-								documentName)) {
+				String key = tokens[1];
+//				if (!server.getDocumentMap().containsKey(key)
+//						|| !server.getDocumentVersionMap().containsKey(key)) {
+				Document found = (Document) server.getProjects().find(new Document("key", key)).first();
+				if(found == null)	
 					returnMessage = error2;
-				} else {
-					int version = server.getVersion(documentName);
+				else {
+					server.uploadToMap(found);
+					int version = server.getVersion(key);
 					String documentText = Encoding.encode(server
-							.getDocumentText(documentName));
-					returnMessage = "open " + documentName + " " + version
+							.getDocumentText(key));
+					returnMessage = "open " + key + " " + version
 							+ " " + documentText;
 				}
 

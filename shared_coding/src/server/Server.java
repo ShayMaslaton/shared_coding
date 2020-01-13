@@ -15,8 +15,10 @@ import org.bson.Document;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Projections;
 
 import debug.Debug;
 
@@ -340,6 +342,26 @@ public class Server {
 		
 		mongoDb = mongoClient.getDatabase("Shared_coding");
 		projects = mongoDb.getCollection("Projects");
+	}
+	
+	public MongoCollection<Document> getProjects(){
+		return projects;
+	}
+	
+	public synchronized String getProjectsNames() {
+		FindIterable<Document> docs = projects.find().projection(Projections.include("key"));
+		String documentNames = "";
+		for(Document doc : docs) 
+			documentNames += " " + doc.getString("key"); // TODO SPLIT _
+		return documentNames;
+	}
+
+	public void uploadToMap(Document found) {
+		String key = found.get("key").toString();
+		documentMap.put(key, new StringBuffer());
+		insert(key, 0, found.get("text").toString());
+		documentVersionMap.put(key, (Integer) found.get("version"));
+		editManager.createNewlog(key);
 	}
 
 }

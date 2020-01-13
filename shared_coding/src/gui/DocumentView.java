@@ -218,7 +218,7 @@ public class DocumentView extends JPanel {
 	 * @param pivotPosition
 	 * @param amount
 	 */
-	private void manageCursor(int currentPos, int pivotPosition, int amount) {
+	private void manageCursor(int currentPos, int pivotPosition, int amount) { // TODO CURSOR IN THE END
 		if(DEBUG){
 			System.out.println("first position: "+caret.getDot());
 			System.out.println("pivot: "+pivotPosition);
