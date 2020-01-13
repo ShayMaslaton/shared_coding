@@ -14,10 +14,13 @@ import java.util.Map;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Projections;
 
 import debug.Debug;
 
@@ -204,6 +207,7 @@ public class Server {
 		document.append("name", documentName);
 		document.append("creator", username);
 		document.append("text", ""); //TODO public main
+		document.append("documentVersion", 1);
 		
 		projects.insertOne(document);
 		
@@ -236,7 +240,15 @@ public class Server {
 	 *         documentName in document version map
 	 */
 	public synchronized int getVersion(String documentName) {
-		return documentVersionMap.get(documentName);
+		System.out.println("document name = " + documentName);
+		Document document = projects.find(new BasicDBObject("key",documentName)).projection(Projections.fields(Projections.include("documentVersion"), Projections.excludeId())).first();
+
+		if(DEBUG)
+			System.out.println("Server.getVersion() returns: " + document.getInteger("documentVersion"));
+		if(document == null)
+			throw new RuntimeException("no document has found");
+		return document.getInteger("documentVersion");
+		//		return documentVersionMap.get(documentName);
 	}
 
 	/**
@@ -344,9 +356,22 @@ public class Server {
 		Document found = (Document) projects.find(new Document("key", userName + "-" + documentName)).first();
 		if(found == null)
 			return false;
-		Bson setValue = new Document("$set", new Document("text", documentMap.get(documentName).toString()));
+		Bson updateValue = new Document("text", documentMap.get(documentName).toString())
+				.append("documentVersion", documentVersionMap.get(documentName));
+		Bson setValue = new Document("$set", updateValue);
 		projects.updateOne(found, setValue);
 		return true;
 	}
 
+	public MongoCollection<Document> getProjects() {
+		return projects;
+	}
+	
+	public synchronized String getProjectsNames() {
+		FindIterable<Document> docs = projects.find().projection(Projections.include("key"));
+		String documentNames = "";
+		for(Document doc : docs) 
+			documentNames += " " + doc.getString("key");
+		return documentNames;
+	}	
 }

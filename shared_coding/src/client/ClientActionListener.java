@@ -57,6 +57,7 @@ public class ClientActionListener {
 		try {
 			for (String line = in.readLine(); line != null; line = in
 					.readLine()) {
+				System.out.println("line = " + line);
 				handleMessageFromServer(line);
 			}
 		}
@@ -91,13 +92,12 @@ public class ClientActionListener {
 		if(DEBUG){ System.out.println("Input message the client gets from the server is " + input);}
 		Pattern pattern = Pattern.compile(regex);
 		Matcher matcher = pattern.matcher(input);
-
+		
 		if (!matcher.find()) {
 			// invalid input
 			main.openErrorView("from CAL: regex failure");
 		}
 		String[] tokens = input.split(" ");
-
 		// 'error' message , only update the front-end
 		if (tokens[0].equals("Error:")) {
 			main.openErrorView(input);
@@ -131,14 +131,12 @@ public class ClientActionListener {
 		else if (tokens[0].equals("open")) {
 			client.updateDocumentName(tokens[1]);
 			//add for version:
+			System.out.println("input = " + input);
 			client.updateVersion(Integer.parseInt(matcher.group(groupOpenVersion)));
 			String documentText = matcher.group(groupOpenText);
 			client.updateText(documentText);
 			if (DEBUG){System.out.println("The open message gets the document with text:" + documentText);}
 			main.switchToDocumentView(tokens[1], documentText);
-
-
-
 		}
 
 		// Change the document.
@@ -153,7 +151,7 @@ public class ClientActionListener {
 					String username = tokens[2];
 					String documentText = matcher.group(groupChangeText);
 					if(DEBUG){System.out.println(documentText);}
-					int editPosition = Integer.parseInt(matcher.group(groupChangePosition));
+					int editPosition = Integer.parseInt(matcher.group(groupChangePosition));		//TODO check why -1?!?!
 					int editLength = Integer.parseInt(matcher.group(groupChangeLength));
 					if(DEBUG){System.out.println(documentText);}
 					main.updateDocument(documentText, editPosition, editLength, username, version);

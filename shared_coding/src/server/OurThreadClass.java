@@ -10,6 +10,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import org.bson.Document;
+
 import debug.Debug;
 
 /**
@@ -27,7 +29,7 @@ public class OurThreadClass extends Thread {
 	private boolean alive;
 	private String username;
 	private final Server server;
-	private final String regex = "(bye [\\w\\d]+)|(save [\\w\\d]+)|(new [\\w\\d]+)|(look)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)"; //TODO add save!
+	private final String regex = "(bye [\\w\\d]+)|(save [\\w\\d]+)|(new [\\w\\d]+)|(look)|(open .+)|(change .+)|(name [\\w\\d]+)"; //TODO add save!
 	private final String error1 = "Error: Document already exists.";
 	private final String error2 = "Error: No such document.";
 	private final String error3 = "Error: No documents exist yet.";
@@ -199,6 +201,7 @@ public class OurThreadClass extends Thread {
 				String fileName = tokens[1];
 				server.updateMongo(username ,fileName);
 				returnMessage = "save";
+				
 			} else if (tokens[0].equals("new")) {
 				// 'new' request, make a new document if the name is valid. else, return a error message.
 				String documentName = tokens[1];
@@ -227,17 +230,26 @@ public class OurThreadClass extends Thread {
 				// if server does not have any documents, return error message
 				// else, return a string of names separated by a space
 				String result = "alldocs";
-				if (server.documentMapisEmpty()) {
+				String allNames = server.getProjectsNames();
+				if(allNames.trim().isEmpty())
 					returnMessage = error3;
-				} else {
-					result = result + server.getAllDocuments();
+				else {
+					result = result + allNames;
 					returnMessage = result;
 				}
-
+				
 			} else if (tokens[0].equals("open")) {				//TODO Open from mongodb
 				// 'open' request, must open a document if it exists on server
 				String documentName = tokens[1];
-				if (!server.getDocumentMap().containsKey(documentName)
+				Document found = (Document) server.getProjects().find(new Document("key", documentName)).first();
+				if(found == null) {
+					returnMessage = error2;}
+				else {
+					int version = server.getVersion(documentName);
+					String documentText = found.get("text").toString();
+					returnMessage = "open " + documentName + " " + version + " " + documentText;
+					}
+				/*if (!server.getDocumentMap().containsKey(documentName)
 						|| !server.getDocumentVersionMap().containsKey(
 								documentName)) {
 					returnMessage = error2;
@@ -248,7 +260,7 @@ public class OurThreadClass extends Thread {
 					returnMessage = "open " + documentName + " " + version
 							+ " " + documentText;
 				}
-
+*/
 			} else if (tokens[0].equals("change")) {
 				// 'change' request, must change the string stored on the server if applicable
 				int version = Integer.parseInt(tokens[3]);
@@ -260,6 +272,7 @@ public class OurThreadClass extends Thread {
 				if (!server.getDocumentMap().containsKey(documentName) || !server.getDocumentVersionMap().containsKey(
 						documentName)) {
 					// if the server does not have the document
+					System.out.println("??????????????????");
 					returnMessage = error2;
 				} else {
 					Object lock = new Object();
@@ -268,7 +281,7 @@ public class OurThreadClass extends Thread {
 					// I.e., a thread check the version number is correct, but in
 					// face that number is changed later on by another thread.
 					synchronized (lock) {
-						if (server.getVersion(documentName) != version) {
+						if (server.getVersion(username+"-"+documentName) != version) {
 							// the client's document version is out of date
 							//update the index relative to the previous inserts so that the change can be inserted
 							if(editType.equals("insert")){
