@@ -27,7 +27,7 @@ public class ClientActionListener {
 	private BufferedReader in;
 	private final String regex = "(Error: .+)|"
 			+ "(alldocs [\\w|\\d]+)|(new [\\w|\\d]+)|(open [\\w|\\d]+\\s(\\d+)\\s?(.+)?)|"
-			+ "(change [\\w|\\d]+\\s[\\w|\\d]+\\s(\\d+)\\s(\\d+)\\s(-?\\d+)\\s?(.+)?)|(name [\\d\\w]+)|(save)";
+			+ "(change [\\w|\\d]+\\s[\\w|\\d]+\\s(\\d+)\\s(\\d+)\\s(-?\\d+)\\s?(.+)?)|(name [\\d\\w]+)";
 	private final int groupChangeVersion = 8;
 	private final int groupChangePosition = 9;
 	private final int groupChangeLength = 10;
@@ -47,7 +47,7 @@ public class ClientActionListener {
 		this.socket = socket;
 		this.main = client.getMainWindow();
 	}
-
+    
 	/**
 	 * listens for server updates and handle the message
 	 * @throws IOException
@@ -57,7 +57,6 @@ public class ClientActionListener {
 		try {
 			for (String line = in.readLine(); line != null; line = in
 					.readLine()) {
-				System.out.println("line = " + line);
 				handleMessageFromServer(line);
 			}
 		}
@@ -92,12 +91,13 @@ public class ClientActionListener {
 		if(DEBUG){ System.out.println("Input message the client gets from the server is " + input);}
 		Pattern pattern = Pattern.compile(regex);
 		Matcher matcher = pattern.matcher(input);
-		
+
 		if (!matcher.find()) {
 			// invalid input
 			main.openErrorView("from CAL: regex failure");
 		}
 		String[] tokens = input.split(" ");
+		
 		// 'error' message , only update the front-end
 		if (tokens[0].equals("Error:")) {
 			main.openErrorView(input);
@@ -114,8 +114,8 @@ public class ClientActionListener {
 		}
 		else if (tokens[0].equals("name")){
 			client.setUsername(tokens[1]);
-
-
+			
+			
 		}
 
 		// "Create" a document with valid name, needs to update the front and
@@ -131,35 +131,40 @@ public class ClientActionListener {
 		else if (tokens[0].equals("open")) {
 			client.updateDocumentName(tokens[1]);
 			//add for version:
-			System.out.println("input = " + input);
 			client.updateVersion(Integer.parseInt(matcher.group(groupOpenVersion)));
 			String documentText = matcher.group(groupOpenText);
 			client.updateText(documentText);
 			if (DEBUG){System.out.println("The open message gets the document with text:" + documentText);}
 			main.switchToDocumentView(tokens[1], documentText);
+
+				
+		
 		}
 
 		// Change the document.
-		//Update DataBase
-		else if (tokens[0].equals("change")) {			//TODO add MongoDB
+		else if (tokens[0].equals("change")) {
 			// first, need to check the documents are the same
 			if(DEBUG){System.out.println("from CAL: updating document(in ClientActionListener.java)");}
+			
 			int version = Integer.parseInt(matcher.group(groupChangeVersion));
 			if (client.getDocumentName()!=null) {
-				if(client.getDocumentName().equals(tokens[1]) ){
-					// The document is changed, must update the back-end and front end
-					String username = tokens[2];
-					String documentText = matcher.group(groupChangeText);
-					if(DEBUG){System.out.println(documentText);}
-					int editPosition = Integer.parseInt(matcher.group(groupChangePosition));		//TODO check why -1?!?!
-					int editLength = Integer.parseInt(matcher.group(groupChangeLength));
-					if(DEBUG){System.out.println(documentText);}
-					main.updateDocument(documentText, editPosition, editLength, username, version);
-					client.updateText(documentText);
-					client.updateVersion(version);
-				}
+				if(client.getDocumentName().equals( tokens[1]) ){
+				// The document is changed, must update the back-end and front end
+				String username = tokens[2];
+				String documentText = matcher.group(groupChangeText);
+				if(DEBUG){System.out.println(documentText);}
+				int editPosition = Integer.parseInt(matcher.group(groupChangePosition));
+				int editLength = Integer.parseInt(matcher.group(groupChangeLength));
+				if(DEBUG){System.out.println(documentText);}
+				main.updateDocument(documentText, editPosition, editLength, username, version);
+				client.updateText(documentText);
+				client.updateVersion(version);
+
 			}
+
 		}
+		}
+
 	}
 
 }

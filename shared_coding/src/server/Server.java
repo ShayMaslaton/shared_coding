@@ -12,15 +12,11 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.bson.Document;
-import org.bson.conversions.Bson;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Projections;
 
 import debug.Debug;
 
@@ -46,7 +42,7 @@ public class Server {
 	private final EditManager editManager;
 	
 	private MongoClientURI clientURI;
-	private MongoClient mongoClient;
+	private MongoClient mongoClient;	
 	private MongoDatabase mongoDb;
 	private MongoCollection<Document> projects;
 
@@ -152,9 +148,9 @@ public class Server {
 	 * @return a string that is transformed message with version and offset
 	 *         corrected to match the current document on server
 	 */
-	public synchronized String manageEdit(String documentName, int version,
+	public synchronized String manageEdit(String key, int version,
 			int offset) {
-		return editManager.manageEdit(documentName, version, offset);
+		return editManager.manageEdit(key, version, offset);
 	}
 
 	/**
@@ -202,18 +198,19 @@ public class Server {
 	 * @param documentName
 	 *            name of document
 	 */
-	public synchronized void addNewDocument(String documentName, String username) {
-		Document document = new Document("key", username+"-"+documentName);
+	public synchronized void addNewDocument(String userName, String documentName) {
+		String key = userName+"_"+documentName;
+		documentMap.put(key, new StringBuffer());
+		documentVersionMap.put(key, 1);
+		editManager.createNewlog(key);
+		
+		Document document = new Document("key", key);
 		document.append("name", documentName);
-		document.append("creator", username);
+		document.append("creator", userName);
+		document.append("version", 1); 
 		document.append("text", ""); //TODO public main
-		document.append("documentVersion", 1);
 		
 		projects.insertOne(document);
-		
-		documentMap.put(documentName, new StringBuffer());
-		documentVersionMap.put(documentName, 1);
-		editManager.createNewlog(documentName);
 
 	}
 
@@ -227,8 +224,8 @@ public class Server {
 	 * @param version
 	 *            the new version number
 	 */
-	public synchronized void updateVersion(String documentName, int version) {
-		documentVersionMap.put(documentName, version);
+	public synchronized void updateVersion(String key, int version) {
+		documentVersionMap.put(key, version);
 	}
 
 	/**
@@ -239,16 +236,8 @@ public class Server {
 	 * @return the integer that is current version number corresponding to the
 	 *         documentName in document version map
 	 */
-	public synchronized int getVersion(String documentName) {
-		System.out.println("document name = " + documentName);
-		Document document = projects.find(new BasicDBObject("key",documentName)).projection(Projections.fields(Projections.include("documentVersion"), Projections.excludeId())).first();
-
-		if(DEBUG)
-			System.out.println("Server.getVersion() returns: " + document.getInteger("documentVersion"));
-		if(document == null)
-			throw new RuntimeException("no document has found");
-		return document.getInteger("documentVersion");
-		//		return documentVersionMap.get(documentName);
+	public synchronized int getVersion(String key) {
+		return documentVersionMap.get(key);
 	}
 
 	/**
@@ -263,12 +252,12 @@ public class Server {
 	 * @param endPosition
 	 *            the end position of the text going to be deleted
 	 */
-	public synchronized void delete(String documentName, int offset,
+	public synchronized void delete(String key, int offset,
 			int endPosition) {
 		if (offset < 0 || endPosition < 1) {
 			throw new RuntimeException("invalid args");
 		}
-		documentMap.get(documentName).delete(offset, endPosition);
+		documentMap.get(key).delete(offset, endPosition);
 	}
 
 	/**
@@ -282,8 +271,8 @@ public class Server {
 	 * @param text
 	 *            the text that we want to insert into
 	 */
-	public synchronized void insert(String documentName, int offset, String text) {
-		documentMap.get(documentName).insert(offset, text);
+	public synchronized void insert(String key, int offset, String text) {
+		documentMap.get(key).insert(offset, text);
 	}
 
 	/**
@@ -293,9 +282,9 @@ public class Server {
 	 *            the name of the document
 	 * @return document text the text of the document
 	 */
-	public synchronized String getDocumentText(String documentName) {
+	public synchronized String getDocumentText(String key) {
 		String document = "";
-		document = documentMap.get(documentName).toString();
+		document = documentMap.get(key).toString();
 		return document;
 	}
 
@@ -306,8 +295,8 @@ public class Server {
 	 *            the name of the document
 	 * @return length the length of the text of that document
 	 */
-	public synchronized int getDocumentLength(String documentName) {
-		return documentMap.get(documentName).length();
+	public synchronized int getDocumentLength(String key) {
+		return documentMap.get(key).length();
 	}
 
 	/**
@@ -343,6 +332,7 @@ public class Server {
 			}
 		}
 	}
+	
 	private void connectToMongo() {
 		String uri = "mongodb+srv://admin:admin@cluster0-sjsqe.mongodb.net/test";
 		clientURI = new MongoClientURI(uri);
@@ -352,26 +342,4 @@ public class Server {
 		projects = mongoDb.getCollection("Projects");
 	}
 
-	public boolean updateMongo(String userName, String documentName) {
-		Document found = (Document) projects.find(new Document("key", userName + "-" + documentName)).first();
-		if(found == null)
-			return false;
-		Bson updateValue = new Document("text", documentMap.get(documentName).toString())
-				.append("documentVersion", documentVersionMap.get(documentName));
-		Bson setValue = new Document("$set", updateValue);
-		projects.updateOne(found, setValue);
-		return true;
-	}
-
-	public MongoCollection<Document> getProjects() {
-		return projects;
-	}
-	
-	public synchronized String getProjectsNames() {
-		FindIterable<Document> docs = projects.find().projection(Projections.include("key"));
-		String documentNames = "";
-		for(Document doc : docs) 
-			documentNames += " " + doc.getString("key");
-		return documentNames;
-	}	
 }

@@ -60,9 +60,9 @@ public class EditManager {
 	 * @param offset the place the edit was first inserted
 	 * @return the corrected offset
 	 */
-	public synchronized String manageEdit(String documentName, int version,
+	public synchronized String manageEdit(String key, int version,
 			int offset) {
-		List<Edit> list = editLog.get(documentName);
+		List<Edit> list = editLog.get(key);
 		int updatedOffset = offset;
 		for (Edit edit : list) {
 			if (edit.getVersion() >= version) {
@@ -73,7 +73,7 @@ public class EditManager {
 		}
 		if (DEBUG){System.out.println("new offset: "+offset);}
 		if (DEBUG){System.out.println("new version: "+version);}
-		String result = documentName+" "+(version+1)+" "+offset;
+		String result = key+" "+(version+1)+" "+offset;
 		return result;
 	}
 	

@@ -110,7 +110,7 @@ public class DocumentView extends JPanel {
 		open = new JMenuItem("Open");
 		open.addActionListener(new OpenFileListener());
 		file.add(open);
-
+		
 		save = new JMenuItem("Save");
 		save.addActionListener(new SaveFileListener());
 		file.add(save);
@@ -118,9 +118,7 @@ public class DocumentView extends JPanel {
 		exit = new JMenuItem("Exit");
 		exit.addActionListener(new ExitFileListener());
 		file.add(exit);
-		
 		frame.setJMenuBar(menu);
-		
 		
 		caret = new DefaultCaret();
 		area = new JTextArea(25, 65);
@@ -306,6 +304,15 @@ public class DocumentView extends JPanel {
 		}
 	}
 
+	private class SaveFileListener implements ActionListener {
+		/**
+		 * Save the File to the Cloud SQL
+		 */
+		public void actionPerformed(ActionEvent e) {
+			// send message to client, get documentNames
+			client.sendMessageToServer("save");
+		}
+	}
 	
 	/** Class representing a Listener on the Exit button in the JMenu */
 	private class ExitFileListener implements ActionListener {
@@ -320,24 +327,12 @@ public class DocumentView extends JPanel {
 					JOptionPane.YES_NO_OPTION);
 			if (n == 0) {
 				if(!client.getSocket().isClosed()) {
-					client.sendMessageToServer("bye " + documentName);
+					client.sendMessageToServer("bye");
 					}
 				System.exit(0);
 			}
 		}
 	}
-	
-	/** Class representing a Listener on the Open button in the JMenu */
-	private class SaveFileListener implements ActionListener {
-		/**
-		 * Save the File to the Cloud SQL
-		 */
-		public void actionPerformed(ActionEvent e) {
-			// send message to client, get documentNames
-			client.sendMessageToServer("save " + documentName);
-		}
-	}
-	
 	/** Class representing a listener on the Copy button in the JMenu*/
 	private class CopyListener implements ActionListener {
 		

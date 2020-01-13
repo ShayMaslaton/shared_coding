@@ -10,8 +10,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import org.bson.Document;
-
 import debug.Debug;
 
 /**
@@ -29,7 +27,7 @@ public class OurThreadClass extends Thread {
 	private boolean alive;
 	private String username;
 	private final Server server;
-	private final String regex = "(bye [\\w\\d]+)|(save [\\w\\d]+)|(new [\\w\\d]+)|(look)|(open .+)|(change .+)|(name [\\w\\d]+)"; //TODO add save!
+	private final String regex = "(bye)|(new [\\w\\d]+)|(look)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)";
 	private final String error1 = "Error: Document already exists.";
 	private final String error2 = "Error: No such document.";
 	private final String error3 = "Error: No documents exist yet.";
@@ -143,7 +141,7 @@ public class OurThreadClass extends Thread {
 	
 	/**
 	 * handler for client input. Our grammar: 
-	 * Message :== Edit | Open | New | Look| Bye |Name | Save
+	 * Message :== Edit | Open | New | Look| Bye |Name
 	 * Edit :== change DocumentName Username Version (Remove|Insert) 
 	 * Remove :==remove Position Position 
 	 * Insert :== insert Chars Position 
@@ -151,7 +149,6 @@ public class OurThreadClass extends Thread {
 	 * New :== new DocumentName 
 	 * Look :== look 
 	 * Bye::=="bye"
-	 * Save :== save
 	 * Name ::== name Username
 	 * Username ::== Chars
 	 * Chars:==.+ 
@@ -191,17 +188,9 @@ public class OurThreadClass extends Thread {
 		} else {
 			if (tokens[0].equals("bye")) {
 				// 'bye' request
-				String fileName = tokens[1];
-				server.updateMongo(username , fileName);
 				alive = false;
 				returnMessage = "bye";
 
-			} else if (tokens[0].equals("save")) {
-				// 'save' request
-				String fileName = tokens[1];
-				server.updateMongo(username ,fileName);
-				returnMessage = "save";
-				
 			} else if (tokens[0].equals("new")) {
 				// 'new' request, make a new document if the name is valid. else, return a error message.
 				String documentName = tokens[1];
@@ -211,7 +200,7 @@ public class OurThreadClass extends Thread {
 				if (server.getDocumentMap().containsKey(documentName)) {
 					returnMessage = error1;
 				} else {
-					server.addNewDocument(documentName, username);
+					server.addNewDocument(username, documentName);
 					returnMessage = "new " + documentName;
 				}
 			}else if(tokens[0].equals("name")){
@@ -230,26 +219,17 @@ public class OurThreadClass extends Thread {
 				// if server does not have any documents, return error message
 				// else, return a string of names separated by a space
 				String result = "alldocs";
-				String allNames = server.getProjectsNames();
-				if(allNames.trim().isEmpty())
+				if (server.documentMapisEmpty()) {
 					returnMessage = error3;
-				else {
-					result = result + allNames;
+				} else {
+					result = result + server.getAllDocuments();
 					returnMessage = result;
 				}
-				
-			} else if (tokens[0].equals("open")) {				//TODO Open from mongodb
+
+			} else if (tokens[0].equals("open")) {
 				// 'open' request, must open a document if it exists on server
 				String documentName = tokens[1];
-				Document found = (Document) server.getProjects().find(new Document("key", documentName)).first();
-				if(found == null) {
-					returnMessage = error2;}
-				else {
-					int version = server.getVersion(documentName);
-					String documentText = found.get("text").toString();
-					returnMessage = "open " + documentName + " " + version + " " + documentText;
-					}
-				/*if (!server.getDocumentMap().containsKey(documentName)
+				if (!server.getDocumentMap().containsKey(documentName)
 						|| !server.getDocumentVersionMap().containsKey(
 								documentName)) {
 					returnMessage = error2;
@@ -260,7 +240,7 @@ public class OurThreadClass extends Thread {
 					returnMessage = "open " + documentName + " " + version
 							+ " " + documentText;
 				}
-*/
+
 			} else if (tokens[0].equals("change")) {
 				// 'change' request, must change the string stored on the server if applicable
 				int version = Integer.parseInt(tokens[3]);
@@ -269,10 +249,10 @@ public class OurThreadClass extends Thread {
 				String documentName = tokens[1];
 				String editType = tokens[4];
 				String username = tokens[2];
-				if (!server.getDocumentMap().containsKey(documentName) || !server.getDocumentVersionMap().containsKey(
-						documentName)) {
+				String key = username + "_" + documentName;      //TODO check if its the same username
+				if (!server.getDocumentMap().containsKey(key) || 
+						!server.getDocumentVersionMap().containsKey(key)) {
 					// if the server does not have the document
-					System.out.println("??????????????????");
 					returnMessage = error2;
 				} else {
 					Object lock = new Object();
@@ -281,35 +261,35 @@ public class OurThreadClass extends Thread {
 					// I.e., a thread check the version number is correct, but in
 					// face that number is changed later on by another thread.
 					synchronized (lock) {
-						if (server.getVersion(username+"-"+documentName) != version) {
+						if (server.getVersion(key) != version) {
 							// the client's document version is out of date
 							//update the index relative to the previous inserts so that the change can be inserted
 							if(editType.equals("insert")){
 								offset = Integer.parseInt(tokens[6]);
 							}
 							else{offset = Integer.parseInt(tokens[5]);}
-							String updates = server.manageEdit(documentName,version, offset);
+							String updates = server.manageEdit(key,version, offset);
 							String[] updatedTokens = updates.split(" ");
 							version = Integer.parseInt(updatedTokens[1]);
 							offset = Integer.parseInt(updatedTokens[2]);
 						} 
 						// then, the server could apply the (transformed) edit on document and return messages.
-						int length = server.getDocumentLength(documentName);
+						int length = server.getDocumentLength(key);
 						if (editType.equals("remove")) {
 							offset = Integer.parseInt(tokens[5]);
 							int endPosition = Integer.parseInt(tokens[6]);
 							// The server changes the document text:
-							server.delete(documentName, offset, endPosition);
+							server.delete(key, offset, endPosition);
 							changeLength = offset - endPosition; // negative
-							edit = new Edit(documentName, Type.REMOVE, "",
+							edit = new Edit(key, Type.REMOVE, "",
 									version, offset, changeLength);
 							server.logEdit(edit);
 							// server updates version number:
-							server.updateVersion(documentName, version + 1);
-							returnMessage = createMessage(documentName, username,
+							server.updateVersion(key, version + 1);
+							returnMessage = createMessage(key, username,
 									version + 1, offset, changeLength,
 									Encoding.encode(server
-											.getDocumentText(documentName)));// encode the message!
+											.getDocumentText(key)));// encode the message!
 						} else if (editType.equals("insert")) {
 							Type type = Type.INSERT;
 							offset = Integer.parseInt(tokens[6]);
@@ -318,16 +298,16 @@ public class OurThreadClass extends Thread {
 								returnMessage = error4;
 							} else {
 								// the server updates the document text:
-								server.insert(documentName, offset, text);
+								server.insert(key, offset, text);
 								changeLength = text.length();
-								edit = new Edit(documentName, type, text,
+								edit = new Edit(key, type, text,
 										version, offset, changeLength);
 								server.logEdit(edit);
 								// the server updated the document version
-								server.updateVersion(documentName, version + 1);
-								returnMessage = createMessage(documentName, username,
+								server.updateVersion(key, version + 1);
+								returnMessage = createMessage(key, username,
 										version + 1, offset, changeLength,
-										Encoding.encode(server.getDocumentText(documentName)));
+										Encoding.encode(server.getDocumentText(key)));
 							}
 						}
 					}
@@ -347,9 +327,9 @@ public class OurThreadClass extends Thread {
 	 * @param documentText  the string that is the entire text of the document.
 	 * @return
 	 */
-	private String createMessage(String documentName, String username, int version, int offset,
+	private String createMessage(String key, String username, int version, int offset,
 			int changeLength, String documentText) {
-		String message = "change " + documentName + " " +username+" "+ version + " "
+		String message = "change " + key + " " +username+" "+ version + " "
 				+ offset + " " + changeLength + " " + documentText;
 		return message;
 	}

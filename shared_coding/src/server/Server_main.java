@@ -14,7 +14,6 @@ import debug.Debug;
 public class Server_main {
 	private static final boolean DEBUG = Debug.DEBUG;
 	private static final int defaultPort = 4444;
-	
 
 	/**
 	 * Entry point for starting a Collaborative Editor Server.

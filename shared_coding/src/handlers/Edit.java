@@ -12,7 +12,7 @@ public class Edit {
 	 */
 	public static enum Type {INSERT, REMOVE}
 
-	private final String documentName;
+	private final String key;
 	private final Type type;
 	private final String text;
 	private final int length;
@@ -32,9 +32,9 @@ public class Edit {
 	 * @param offset
 	 * @param length
 	 */
-	public Edit(String documentName, Type editType, String text, int version,
+	public Edit(String key, Type editType, String text, int version,
 			int offset, int length) {
-		this.documentName = documentName;
+		this.key = key;
 		this.type = editType;
 		this.text = text;
 		this.offset = offset;
@@ -47,7 +47,7 @@ public class Edit {
 	 * check the rep invariant
 	 */
 	private void checkRep() {
-		assert documentName != null;
+		assert key != null;
 		assert type != null;
 	}
 
@@ -82,14 +82,14 @@ public class Edit {
 
 	/** @return the documentName of the edit. */
 	public String getDocumentName() {
-		return documentName;
+		return key;
 	}
 
 	/**
 	 * Creates a string representation of the edit
 	 */
 	public String toString() {
-		return "Edit: " + documentName + " type: " + type + " v: " + version
+		return "Edit: " + key + " type: " + type + " v: " + version
 				+ " offset: " + offset + " length: " + length + " text: " + text;
 	}
 

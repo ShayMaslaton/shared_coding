@@ -35,7 +35,7 @@ public class ExitWindowListener implements WindowListener {
 		System.out.println("sending bye");
 		}
 		if(client != null && !client.getSocket().isClosed()){
-		client.sendMessageToServer("bye " + client.getDocumentName());
+		client.sendMessageToServer("bye");
 		System.exit(0);
 		}
 	}
