@@ -88,7 +88,7 @@ public class WelcomeView extends JPanel implements ActionListener {
 			}
 		}
 		else if (e.getSource() == openDocumentButton){
-			client.sendMessageToServer("look");
+			client.sendMessageToServer("look " + client.getUsername());
 		}
 	}
 

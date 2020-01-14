@@ -284,7 +284,7 @@ public class DocumentView extends JPanel {
 					"Enter a new document name", "");
 			// If the client does not click on "cancel", it need to send the message to the server.
 			if (newDocumentName !=null){
-			    String message = "new " + newDocumentName;
+			    String message = "new " + newDocumentName + " " + username + "_" + documentName;
             	MessageSwingWorker worker = new MessageSwingWorker(client,
 						message, true);
 				worker.execute();
@@ -300,7 +300,7 @@ public class DocumentView extends JPanel {
 		 */
 		public void actionPerformed(ActionEvent e) {
 			// send message to client, get documentNames
-			client.sendMessageToServer("look");
+			client.sendMessageToServer("look " + username + "_" + documentName);
 		}
 	}
 

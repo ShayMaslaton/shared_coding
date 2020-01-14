@@ -367,7 +367,7 @@ public class Server {
 
 	public boolean updateMongo(String key) {
 		Document found = (Document) projects.find(new Document("key",key)).first();
-		if(found == null) {
+		if(found == null || documentMapisEmpty()) {
 			return false;
 		}
 		Bson updateValue = new Document("text", documentMap.get(key).toString())

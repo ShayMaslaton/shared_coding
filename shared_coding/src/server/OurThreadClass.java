@@ -29,7 +29,8 @@ public class OurThreadClass extends Thread {
 	private boolean alive;
 	private String username;
 	private final Server server;
-	private final String regex = "(bye .+)|(new [\\w\\d]+)|(look)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)"; // TODO ADD SAVE
+	private final String regex = 
+			"(bye [\\w\\d]+)|(new .+)|(look [\\w\\d]+)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)|(save .+)"; 
 	private final String error1 = "Error: Document already exists.";
 	private final String error2 = "Error: No such document.";
 	private final String error3 = "Error: No documents exist yet.";
@@ -150,8 +151,8 @@ public class OurThreadClass extends Thread {
 	 * Open:== open DocumentName 
 	 * New :== new DocumentName 
 	 * Look :== look 
-	 * Bye::=="bye"
-	 * Save:==save
+	 * Bye::==bye userName DocumentName
+	 * Save:==save userName DocumentName
 	 * Name ::== name Username
 	 * Username ::== Chars
 	 * Chars:==.+ 
@@ -183,7 +184,6 @@ public class OurThreadClass extends Thread {
 		if (!input.matches(regex)) {
 			// for invalid input
 			// empty documentName
-			System.out.println("in bye : " + tokens[0] + " " + tokens[1] + " " + tokens[2]);
 			if (tokens.length == 1 && tokens[0].equals("new")) {
 				return error5;
 			} else {
@@ -209,10 +209,13 @@ public class OurThreadClass extends Thread {
 			} else if (tokens[0].equals("new")) {
 				// 'new' request, make a new document if the name is valid. else, return a error message.
 				String documentName = tokens[1];
+				String key = username + "_" + documentName;
+				if(tokens.length==3)
+					server.updateMongo(tokens[2]);
 				if (DEBUG) {
 					System.out.println("creating new document");
 				}
-				if (server.getDocumentMap().containsKey(username + "_" + documentName)) { // TODO CHECK IF WORKS
+				if (server.getDocumentMap().containsKey(key)) { // TODO CHECK IF WORKS
 					returnMessage = error1;
 				} else {
 					server.addNewDocument(username, documentName);
@@ -234,10 +237,12 @@ public class OurThreadClass extends Thread {
 				// if server does not have any documents, return error message
 				// else, return a string of names separated by a space
 				String allProjects = "alldocs";
+				String key = tokens[1];
 				allProjects = allProjects + server.getProjectsNames();
 				if (allProjects.trim().isEmpty()) {
 					returnMessage = error3;
 				} else {
+					server.updateMongo(key);
 					returnMessage = allProjects;
 				}
 
