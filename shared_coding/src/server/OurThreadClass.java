@@ -251,13 +251,13 @@ public class OurThreadClass extends Thread {
 				// 'open' request, must open a document if it exists on server
 				String key = tokens[1];
 				String name = key.split("_")[1];
-//				if (!server.getDocumentMap().containsKey(key)
-//						|| !server.getDocumentVersionMap().containsKey(key)) {
-				Document found = (Document) server.getProjects().find(new Document("key", key)).first();
-				if(found == null)	
-					returnMessage = error2;
-				else {
+				if (!server.getDocumentMap().containsKey(key)) {
+					Document found = (Document) server.getProjects().find(new Document("key", key)).first();
 					server.uploadToMap(found);
+					if(found == null)	
+						returnMessage = error2;
+				}
+				if(server.getDocumentMap().containsKey(key)) {
 					int version = server.getVersion(key);
 					String documentText = Encoding.encode(server
 							.getDocumentText(key));
