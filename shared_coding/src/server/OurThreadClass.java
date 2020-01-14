@@ -29,7 +29,7 @@ public class OurThreadClass extends Thread {
 	private boolean alive;
 	private String username;
 	private final Server server;
-	private final String regex = "(bye)|(new [\\w\\d]+)|(look)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)"; // TODO ADD SAVE
+	private final String regex = "(bye .+)|(new [\\w\\d]+)|(look)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)"; // TODO ADD SAVE
 	private final String error1 = "Error: Document already exists.";
 	private final String error2 = "Error: No such document.";
 	private final String error3 = "Error: No documents exist yet.";
@@ -183,6 +183,7 @@ public class OurThreadClass extends Thread {
 		if (!input.matches(regex)) {
 			// for invalid input
 			// empty documentName
+			System.out.println("in bye : " + tokens[0] + " " + tokens[1] + " " + tokens[2]);
 			if (tokens.length == 1 && tokens[0].equals("new")) {
 				return error5;
 			} else {
@@ -191,6 +192,10 @@ public class OurThreadClass extends Thread {
 		} else {
 			if (tokens[0].equals("bye")) {
 				// 'bye' request
+				String userName = tokens[1];
+				String documentName = tokens[2];
+				String key = userName +"_"+documentName;
+				server.updateMongo(key);
 				alive = false;
 				returnMessage = "bye";
 
@@ -199,8 +204,7 @@ public class OurThreadClass extends Thread {
 				String userName = tokens[1];
 				String documentName = tokens[2];
 				String key = userName +"_"+documentName;
-				String text;
-				server.updateMongo(key, text);
+				server.updateMongo(key);
 				returnMessage = "save";
 			} else if (tokens[0].equals("new")) {
 				// 'new' request, make a new document if the name is valid. else, return a error message.
@@ -240,6 +244,7 @@ public class OurThreadClass extends Thread {
 			} else if (tokens[0].equals("open")) {
 				// 'open' request, must open a document if it exists on server
 				String key = tokens[1];
+				String name = key.split("_")[1];
 //				if (!server.getDocumentMap().containsKey(key)
 //						|| !server.getDocumentVersionMap().containsKey(key)) {
 				Document found = (Document) server.getProjects().find(new Document("key", key)).first();
@@ -250,7 +255,7 @@ public class OurThreadClass extends Thread {
 					int version = server.getVersion(key);
 					String documentText = Encoding.encode(server
 							.getDocumentText(key));
-					returnMessage = "open " + key + " " + version
+					returnMessage = "open " + name + " " + version
 							+ " " + documentText;
 				}
 

@@ -327,7 +327,7 @@ public class DocumentView extends JPanel {
 					JOptionPane.YES_NO_OPTION);
 			if (n == 0) {
 				if(!client.getSocket().isClosed()) {
-					client.sendMessageToServer("bye");
+					client.sendMessageToServer("bye " + username + " " + documentName);
 					}
 				System.exit(0);
 			}

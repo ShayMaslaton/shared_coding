@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
@@ -364,4 +365,15 @@ public class Server {
 		editManager.createNewlog(key);
 	}
 
+	public boolean updateMongo(String key) {
+		Document found = (Document) projects.find(new Document("key",key)).first();
+		if(found == null) {
+			return false;
+		}
+		Bson updateValue = new Document("text", documentMap.get(key).toString())
+				.append("documentVersion", documentVersionMap.get(key));
+		Bson setValue = new Document("$set", updateValue);
+		projects.updateOne(found, setValue);
+		return true;
+	}
 }
