@@ -30,7 +30,7 @@ public class OurThreadClass extends Thread {
 	private String username;
 	private final Server server;
 	private final String regex = 
-			"(bye [\\w\\d]+)|(new .+)|(look [\\w\\d]+)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)|(save .+)"; 
+			"(bye .+)|(new .+)|(look [\\w\\d]+)|(open [\\w\\d]+)|(change .+)|(name [\\w\\d]+)|(save .+)"; 
 	private final String error1 = "Error: Document already exists.";
 	private final String error2 = "Error: No such document.";
 	private final String error3 = "Error: No documents exist yet.";
@@ -192,20 +192,20 @@ public class OurThreadClass extends Thread {
 		} else {
 			if (tokens[0].equals("bye")) {
 				// 'bye' request
-				String userName = tokens[1];
-				String documentName = tokens[2];
-				String key = userName +"_"+documentName;
+				String userName = tokens[1];			//TODO maybe need to use it
+				String key = tokens[2];
+				
 				server.updateMongo(key);
 				alive = false;
 				returnMessage = "bye";
 
 			} else if (tokens[0].equals("save")) {
 				//TODO SAVE
-				String userName = tokens[1];
-				String documentName = tokens[2];
-				String key = userName +"_"+documentName;
+				String userName = tokens[1];				//TODO maybe need to use it
+				String key = tokens[2];
 				server.updateMongo(key);
 				returnMessage = "save";
+				
 			} else if (tokens[0].equals("new")) {
 				// 'new' request, make a new document if the name is valid. else, return a error message.
 				String documentName = tokens[1];
@@ -221,6 +221,7 @@ public class OurThreadClass extends Thread {
 					server.addNewDocument(username, documentName);
 					returnMessage = "new " + documentName;
 				}
+				
 			}else if(tokens[0].equals("name")){
 				if (DEBUG){System.out.println(tokens[1]);}
 				if(server.nameIsAvailable(tokens[1])){
@@ -260,7 +261,7 @@ public class OurThreadClass extends Thread {
 					int version = server.getVersion(key);
 					String documentText = Encoding.encode(server
 							.getDocumentText(key));
-					returnMessage = "open " + name + " " + version
+					returnMessage = "open " + key + " " + version
 							+ " " + documentText;
 				}
 
@@ -269,10 +270,11 @@ public class OurThreadClass extends Thread {
 				int version = Integer.parseInt(tokens[3]);
 				int offset, changeLength;
 				Edit edit;
-				String documentName = tokens[1];
+				String key = tokens[1];
+				//System.out.println("the document name is: " + documentName);
 				String editType = tokens[4];
 				String username = tokens[2];
-				String key = username + "_" + documentName;      //TODO check if its the same username
+				String documentName = key.split("_")[1];      //TODO check if its the same username
 				if (!server.getDocumentMap().containsKey(key) || 
 						!server.getDocumentVersionMap().containsKey(key)) {
 					// if the server does not have the document

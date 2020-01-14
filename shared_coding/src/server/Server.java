@@ -367,6 +367,7 @@ public class Server {
 
 	public boolean updateMongo(String key) {
 		Document found = (Document) projects.find(new Document("key",key)).first();
+		if(DEBUG)System.out.println("Updating mongoDB with key " + key);
 		if(found == null || documentMapisEmpty()) {
 			return false;
 		}
