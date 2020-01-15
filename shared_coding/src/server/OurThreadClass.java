@@ -210,8 +210,15 @@ public class OurThreadClass extends Thread {
 				// 'new' request, make a new document if the name is valid. else, return a error message.
 				String documentName = tokens[1];
 				String key = username + "_" + documentName;
+				
 				if(tokens.length==3)
+				/**
+				 * tokens.length == 3 only if I try to create new file 
+				 * while I'm already in another file 
+				 * and I need to save the current file
+				 */
 					server.updateMongo(tokens[2]);
+				
 				if (DEBUG) {
 					System.out.println("creating new document");
 				}
@@ -219,7 +226,9 @@ public class OurThreadClass extends Thread {
 					returnMessage = error1;
 				} else {
 					server.addNewDocument(username, documentName);
-					returnMessage = "new " + documentName;
+					String documentText = Encoding.encode(server
+							.getDocumentText(key));
+					returnMessage = "new " + key + " " +  documentText;
 				}
 				
 			}else if(tokens[0].equals("name")){

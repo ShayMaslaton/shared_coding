@@ -2,6 +2,7 @@ package server;
 
 import handlers.Edit;
 import handlers.EditManager;
+import handlers.Encoding;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -43,6 +44,10 @@ public class Server {
 	private ArrayList<OurThreadClass> threadList;
 	private ArrayList<String> usernameList;
 	private final EditManager editManager;
+	private final String INITIAL_TEXT = 
+			"public+class+michael_test+%7B%0A%0A%09"
+			+ "public+static+void+main%28String%5B%5D+args%29+%7B%0A%09%09"
+			+ "%2F%2F+TODO+Auto-generated+method+stub%0A%0A%09%7D%0A%0A%7D";
 	
 	private MongoClientURI clientURI;
 	private MongoClient mongoClient;	
@@ -203,16 +208,17 @@ public class Server {
 	 */
 	public synchronized void addNewDocument(String userName, String documentName) {
 		String key = userName+"_"+documentName;
-		documentMap.put(key, new StringBuffer());
+		/*documentMap.put(key, new StringBuffer());
 		documentVersionMap.put(key, 1);
-		editManager.createNewlog(key);
+		editManager.createNewlog(key);*/
 		
 		Document document = new Document("key", key);
 		document.append("name", documentName);
 		document.append("creator", userName);
 		document.append("version", 1); 
-		document.append("text", ""); //TODO public main
+		document.append("text", Encoding.decode(INITIAL_TEXT)); //TODO public main
 		
+		uploadToMap(document);
 		projects.insertOne(document);
 
 	}

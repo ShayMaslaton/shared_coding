@@ -121,10 +121,12 @@ public class ClientActionListener {
 		// "Create" a document with valid name, needs to update the front and
 		// back ends
 		else if (tokens[0].equals("new")) {
-			main.switchToDocumentView(tokens[1], "");
+			String documentText = tokens[2];
 			client.updateDocumentName(tokens[1]);
+			client.updateText(documentText);
 			// add for version: set the version to 1
 			client.updateVersion(1);
+			main.switchToDocumentView(tokens[1], documentText);
 		}
 
 		// "Open the document", update both front and end
